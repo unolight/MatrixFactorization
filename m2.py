@@ -1,4 +1,4 @@
-from numpy.random import laplace, normal, exponential
+from numpy.random import laplace, normal, exponential, random_integers
 from numpy import sqrt
 import numpy as np
 import sys
@@ -6,6 +6,7 @@ import sys
 N = 943  # users
 M = 1682 # items
 K = 20   # latent features, between 20 to 100
+P = 2147483647
 maxr = 5
 minr = 1
 
@@ -90,24 +91,24 @@ def read2(file):
 
 
 ### intial functions 
-def uArray():
+def initUserArray():
 	return np.random.rand(1, K)
 
-def sArray():
+def initItemArray():
 	return np.random.rand(M,K)
 
-def ratings(uid):
+def parseUserRatings(uid):
 	# Ratings
 	r = np.reshape(Ratings[uid], (1, len(Ratings[uid])))
 	return r
 
 def Noise():
-	f = laplace(0, 2*(maxr-minr)*sqrt(K)/epi,1*M)
-	noise = np.reshape(f, (1,M))
+	f = laplace(0, 2*(maxr-minr)*sqrt(K)/epi,k*M)
+	noise = np.reshape(f, (M,k))
 	return noise
 
 def initGrad():
-	return np.zeros((1,K))
+	return np.zeros((M,K))
 
 
 # Users = np.random.rand(N,K)
@@ -115,39 +116,59 @@ def initGrad():
 
 class Server:
 	def __init__(self):
-		self.V = sArray()
+		self.V = initItemArray()
+	def randomNoise():
+		return random_integers(0,P)
 
 class Client:
 	# p = []  user preference, confidential
 	# noise = []  perturbation array
-	# noise2 = []  pertubation array 2
 	t = 0  # the tth iteration
 	count = 0
 	def __init__(self, uid):
 		self.uid = uid
-		self.p = uArray()
-		self.R = ratings(uid)
-		self.grad = initGrad()
+		self.p = initUserArray()
+		self.R = parseUserRatings(uid)
 		self.noise = Noise()
-		# self.noise2 = noise2()
+		self.noise2 = Noise()
 		Client.count+=1
 	def gradient(self, Q):
+		self.noise2= Noise()
+		# print self.noise2
+		grad = initGrad()
 	    for j in xrange(M):
-	    	key = (uid,j)
-	    	if key in R:
-	    		eij = self.R[key] - np.dot(self.p[0,:],Q[:,j])
+	    	if R[0][j] != 0:
+	    		eij = self.R[0][j] - np.dot(self.p[0,:],Q[:,j])
 	    		for k in xrange(K):
-					grad[0][j]=Q[k][j]+alpha*(2*eij*self.p[0][k]-beta*Q[k][j])+self.noise[0][k]
+					grad[j][k]=Q[k][j]+alpha*(2*eij*self.p[0][k]-beta*Q[k][j]) \
+					+self.noise[j][k]+self.noise2[j][k]
 		return uid, grad
 
+class semiServer:
+	def __init__(self):
+		gradCount = np.zeors((N,M))
+
+
+
 ### ====  main ====
-file1 = sys.argv[1]
-file2 = sys.argv[2]
-file3 = sys.argv[3]
-read1(file1)
-read2(file2)
+steps = 1000
+
+train = sys.argv[1]
+test = sys.argv[2]
+output = sys.argv[3]
+read1(train)
+read2(test)
 
 U = [Client(i) for i in xrange(N)]
+# print U[0].p.shape, U[0].R.shape, U[0].grad.shape, U[0].noise.shape
 server = Server()
+semiServer = SemiServer()
+
+for step in xrange(steps):
+	for ui in U:
+
+
+
+
 
 
