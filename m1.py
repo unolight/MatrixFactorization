@@ -27,8 +27,8 @@ def MF(R, P, Q, K, steps=100, alpha=0.002, beta=0.07):
             	if key in R:
             		eij = R[key] - np.dot(P[i,:],Q[:,j])
             		for k in xrange(K):
-				P[i][k]=P[i][k]+alpha*(2*eij*Q[k][j]-beta*P[i][k])
-				Q[k][j]=Q[k][j]+alpha*(2*eij*P[i][k]-beta*Q[k][j])             			
+				        P[i][k]=P[i][k]+alpha*(2*eij*Q[k][j]-beta*P[i][k])
+				        Q[k][j]=Q[k][j]+alpha*(2*eij*P[i][k]-beta*Q[k][j])             			
         # eR = np.dot(P,Q)
         e = 0	
         for i in xrange(N):
@@ -90,7 +90,7 @@ def NoiseMF(R, P, Q, K, Noise, steps, alpha=0.002, beta=0.05):
             		eij = R[key] - np.dot(P[i,:],Q[:,j])
             		for k in xrange(K):
 						# P[i][k]=P[i][k]+alpha*(2*eij*Q[k][j]-beta*P[i][k])
-				Q[k][j]=Q[k][j]+alpha*(2*eij*P[i][k]-beta*Q[k][j]-Noise[j][k])           			
+				        Q[k][j]=Q[k][j]+alpha*(2*eij*P[i][k]-beta*Q[k][j]-Noise[j][k])           			
         # eR = np.dot(P,Q)
         e = 0	
         for i in xrange(N):
