@@ -12,7 +12,7 @@ minr = 1 # min rating score
 
 alpha=0.00000001
 beta=0.01
-epi = 1
+epi = 10
 
 Ratings = np.zeros((943,1682))
 test_list = {}
@@ -63,14 +63,19 @@ class Server:
         self.Q = np.random.rand(M,K)
         self.grad = np.zeros((M,K))
         self.ratingCount = np.zeros((M,))
-    def randomNoise(self):
-        return random_integers(0,P,)
+        self.uphi = np.zeros((M,K))
+    def randomNoiseVector(self):
+        return random_integers(0,P,K)
     def randomNumberVector(self):
         return exponential(1, K)
     def initgrad(self):
         self.grad = np.zeros((M,K))
     def updateQ(self):
         self.Q += self.grad
+    def add_phi(self, phi):
+        self.uphi = (self.uphi + phi) % P
+    def cal_grad(self, ss_grad):
+        self.grad = ss_grad - self.uphi
 
 class Client:
     # p = []  user preference, confidential
@@ -84,6 +89,7 @@ class Client:
         self.C = np.zeros((M, K))
         self.eta = np.zeros((M,K))
         self.rho = np.zeros((M,K)) # iteration random noise
+        self.phi = np.zeros((M,K))
         Client.count+=1
     def initGrad(self):
         return np.zeros((M,K))
@@ -91,29 +97,34 @@ class Client:
         self.C[j] = normal(0, 1.0/count, K)
     def genNoise(self, j, H):
         self.eta[j] = 2*(maxr-minr)*sqrt(K)/epi*sqrt(2*H)*self.C[j]
+    def genNoise2(self, j, H):
+        self.rho[j] = 2*(maxr-minr)*sqrt(K)/epi*sqrt(2*H)*self.C[j]
     def gradient(self, Q):
         grad = self.initGrad()
         for j in xrange(M):
             if self.R[j] != 0:
                 eij = self.R[j] - np.dot(self.p[0,:],Q[:,j])
                 for k in xrange(K):
-                    grad[j][k]=alpha*(2*eij*self.p[0][k]-beta*Q[k][j])+self.eta[j][k]
+                    grad[j][k]=(alpha*(2*eij*self.p[0][k]-beta*Q[k][j])+self.eta[j][k]+self.rho[j][k]+self.phi[j][k])%P
+        
         return grad
     def error(self, Q):
         e = 0
         for j in xrange(M):
             if  self.R[j] > 0:
-                e = e+pow(self.R[j]-np.dot(self.p[0,:],Q[:,j]),2)           
+                e = e+pow(self.R[j]-np.dot(self.p[0,:],Q[:,j]),2)      
                 for k in xrange(K):
                     e = e+(beta/2)*(pow(self.p[0][k],2)+pow(Q[k][j],2))
         return e
 
 
-class semiServer:
-    def __init__(self): 
-        gradCount = np.zeors((N,M))
-
-
+class SemiServer:
+    def __init__(self):
+        grad = np.zeros((M,K))
+    def add_grad(self, user_grad):
+        for j in xrange(M):
+            for k in xrange(K):
+                self.grad[j][k] = (self.grad[j][k]+user_grad[j][k]) % P
 
 ### ====  main ====
 train = sys.argv[1]
@@ -125,7 +136,7 @@ read2(test)
 U = [Client(i) for i in xrange(N)]
 # print U[0].p.shape, U[0].R.shape, U[0].grad.shape, U[0].noise.shape
 server = Server()
-# semiServer = SemiServer()
+semiServer = SemiServer()
 
 ### produce ratecount array: how many users have rated item
 for i in xrange(N):
@@ -147,9 +158,22 @@ for step in xrange(steps):
     Q = server.Q
     Q = Q.T
     server.initgrad()
+
+    ### noise 2
+    for j in xrange(M):
+        H = server.randomNumberVector()
+        count = server.ratingCount[j]
+        for i in xrange(N):
+            if U[i].R[j] > 0:
+                U[i].randomNormalVector(j, count)
+                U[i].genNoise2(j, H)
+                U[i].phi[j]=server.randomNoiseVector()
+            server.add_phi(U[i].phi)
     for ui in U:
-        server.grad += ui.gradient(Q)
+        semiServer.add_grad(ui.gradient(Q))
+    server.cal_grad(semiServer.grad) 
     server.updateQ()
+
     nQ = server.Q
     nQ = nQ.T
     err = 0
