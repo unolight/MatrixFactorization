@@ -68,8 +68,10 @@ class Server:
         return random_integers(0,P,K)
     def randomNumberVector(self):
         return exponential(1, K)
-    def initgrad(self):
+    def init_grad(self):
         self.grad = np.zeros((M,K))
+    def init_phi(self):
+        self.uphi = np.zeros((M,K))
     def updateQ(self):
         self.Q += self.grad
     def add_phi(self, phi):
@@ -106,7 +108,7 @@ class Client:
                 eij = self.R[j] - np.dot(self.p[0,:],Q[:,j])
                 for k in xrange(K):
                     grad[j][k]=(alpha*(2*eij*self.p[0][k]-beta*Q[k][j])+self.eta[j][k]+self.rho[j][k]+self.phi[j][k])%P
-        
+                    print grad[j][k]
         return grad
     def error(self, Q):
         e = 0
@@ -155,11 +157,12 @@ for j in xrange(M):
 
 steps = 10
 for step in xrange(steps):
+    print 'step%d:' % (step)
     Q = server.Q
     Q = Q.T
-    server.initgrad()
-
-    ### noise 2
+    server.init_grad()
+    server.init_phi
+    ### all user's noise 2 and phi
     for j in xrange(M):
         H = server.randomNumberVector()
         count = server.ratingCount[j]
@@ -169,6 +172,7 @@ for step in xrange(steps):
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector()
             server.add_phi(U[i].phi)
+    print U[0].phi
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
     server.cal_grad(semiServer.grad) 
