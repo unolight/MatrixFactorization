@@ -80,8 +80,9 @@ class Server:
     def add_phi(self, it, n):
         self.uphi[it] = (self.uphi[it] + n) % P
     def cal_grad(self, ss_grad):
-        print(ss_grad)
-        print(self.uphi)
+        print(ss_grad[0])
+        print(self.uphi[0])
+        print((ss_grad[0]-self.uphi[0])%P)
         return (ss_grad - self.uphi) % P
 class Client:
     # p = []  user preference, confidential
@@ -175,15 +176,15 @@ for step in xrange(steps):
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector(j)
                 if j == 0:
+                    print 'user%d' % (i)
                     print U[i].phi[j]
                     print
                     print ('server phi:')
                     print (server.uphi[0]) 
-  
+                    print 
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
-    server.cal_grad(semiServer.grad)
-    server.updateQ()
+    server.updateQ(semiServer.grad)
 
     nQ = server.Q
     nQ = nQ.T
