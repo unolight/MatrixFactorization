@@ -174,7 +174,7 @@ for step in xrange(steps):
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector(j)
         print ('server phi:')
-	   print (server.uphi) 
+        print (server.uphi) 
   
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
