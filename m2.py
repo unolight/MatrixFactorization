@@ -83,6 +83,11 @@ class Server:
         print(ss_grad[0])
         print(self.uphi[0])
         print((ss_grad[0]-self.uphi[0])%P)
+        print('------------')
+        print(ss_grad[0][0])
+        print(self.uphi[0][0])
+        print((ss_grad[0][0]-self.uphi[0][0])%P)
+
         return (ss_grad - self.uphi) % P
 class Client:
     # p = []  user preference, confidential
