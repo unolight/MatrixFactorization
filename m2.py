@@ -77,8 +77,9 @@ class Server:
     def add_phi(self, phi):
         self.uphi = (self.uphi + phi) % P
     def cal_grad(self, ss_grad):
-        self.grad = ss_grad - self.uphi
-
+        self.grad = (ss_grad - self.uphi) % P
+	print 'true'
+	print(self.grad)
 class Client:
     # p = []  user preference, confidential
     # noise = []  perturbation array
@@ -122,11 +123,9 @@ class Client:
 
 class SemiServer:
     def __init__(self):
-        grad = np.zeros((M,K))
+        self.grad = np.zeros((M,K))
     def add_grad(self, user_grad):
-        for j in xrange(M):
-            for k in xrange(K):
-                self.grad[j][k] = (self.grad[j][k]+user_grad[j][k]) % P
+	self.grad = (self.grad+user_grad) % P
 
 ### ====  main ====
 train = sys.argv[1]
@@ -164,6 +163,7 @@ for step in xrange(steps):
     server.init_phi
     ### all user's noise 2 and phi
     for j in xrange(M):
+	print 'j=%d M=%d' % (j,M)
         H = server.randomNumberVector()
         count = server.ratingCount[j]
         for i in xrange(N):
