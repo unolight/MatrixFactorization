@@ -174,10 +174,9 @@ for step in xrange(steps):
                 U[i].randomNormalVector(j, count)
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector(j)
-                print U[i].phi[j]
-                print ()
-                print ()
                 if j == 0:
+                    print U[i].phi[j]
+                    print
                     print ('server phi:')
                     print (server.uphi[0]) 
   
