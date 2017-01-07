@@ -65,9 +65,9 @@ class Server:
         self.ratingCount = np.zeros((M,))
         self.uphi = np.zeros((M,K))
     def randomNoiseVector(self, it):
-        nosie=random_integers(0,P,K)
-        self.add_phi(it,noise)
-        return noise
+        n=random_integers(0,P,K)
+        self.add_phi(it,n)
+        return n
     def randomNumberVector(self):
         return exponential(1, K)
     def init_grad(self):
@@ -174,7 +174,7 @@ for step in xrange(steps):
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector(j)
         print ('server phi:')
-	   print (server.uphi) 
+	print (server.uphi) 
   
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
