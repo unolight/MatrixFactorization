@@ -74,14 +74,15 @@ class Server:
         self.grad = np.zeros((M,K))
     def init_phi(self):
         self.uphi = np.zeros((M,K))
-    def updateQ(self):
+    def updateQ(self, semi_grad):
+        self.grad = self.cal_grad(semi_grad)
         self.Q += self.grad
     def add_phi(self, it, n):
         self.uphi[it] = (self.uphi[it] + n) % P
     def cal_grad(self, ss_grad):
-        self.grad = (ss_grad - self.uphi) % P
-	print 'true'
-	print(self.grad)
+        print(ss_grad)
+        print(self.uphi)
+        return (ss_grad - self.uphi) % P
 class Client:
     # p = []  user preference, confidential
     # noise = []  perturbation array
@@ -173,12 +174,16 @@ for step in xrange(steps):
                 U[i].randomNormalVector(j, count)
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector(j)
-        print ('server phi:')
-        print (server.uphi) 
+                print U[i].phi[j]
+                print ()
+                print ()
+                if j == 0:
+                    print ('server phi:')
+                    print (server.uphi[0]) 
   
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
-    server.cal_grad(semiServer.grad) 
+    server.cal_grad(semiServer.grad)
     server.updateQ()
 
     nQ = server.Q
@@ -186,7 +191,7 @@ for step in xrange(steps):
     err = 0
     for ui in U:
         err = err + ui.error(nQ)
-    print(err)
+    print('err: %f' % (err))
 pred(output, U, server.Q, test_list)
 
 
