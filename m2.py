@@ -154,16 +154,16 @@ for j in xrange(M):
             U[i].randomNormalVector(j, count)
             U[i].genNoise(j, H)
 
-steps = 10
+steps = 1
 for step in xrange(steps):
     print 'step%d:' % (step)
     Q = server.Q
     Q = Q.T
     server.init_grad()
-    server.init_phi
+    server.init_phi()
     ### all user's noise 2 and phi
+    print('==== engender noise 2 and phi ====')
     for j in xrange(M):
-	print 'j=%d M=%d' % (j,M)
         H = server.randomNumberVector()
         count = server.ratingCount[j]
         for i in xrange(N):
@@ -172,6 +172,7 @@ for step in xrange(steps):
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector()
             server.add_phi(U[i].phi)
+        print('server phi: %d' % (server.uphi)) 
     print U[0].phi
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
