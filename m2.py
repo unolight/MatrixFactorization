@@ -64,8 +64,10 @@ class Server:
         self.grad = np.zeros((M,K))
         self.ratingCount = np.zeros((M,))
         self.uphi = np.zeros((M,K))
-    def randomNoiseVector(self):
-        return random_integers(0,P,K)
+    def randomNoiseVector(self, it):
+        nosie=random_integers(0,P,K)
+        self.add_phi(it,noise)
+        return noise
     def randomNumberVector(self):
         return exponential(1, K)
     def init_grad(self):
@@ -74,8 +76,8 @@ class Server:
         self.uphi = np.zeros((M,K))
     def updateQ(self):
         self.Q += self.grad
-    def add_phi(self, phi):
-        self.uphi = (self.uphi + phi) % P
+    def add_phi(self, it, noise):
+        self.uphi[it] = (self.uphi[it] + noise) % P
     def cal_grad(self, ss_grad):
         self.grad = (ss_grad - self.uphi) % P
 	print 'true'
@@ -170,10 +172,9 @@ for step in xrange(steps):
             if U[i].R[j] > 0:
                 U[i].randomNormalVector(j, count)
                 U[i].genNoise2(j, H)
-                U[i].phi[j]=server.randomNoiseVector()
-            server.add_phi(U[i].phi)
+                U[i].phi[j]=server.randomNoiseVector(j)
         print ('server phi:')
-	print (server.uphi) 
+	   print (server.uphi) 
   
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
