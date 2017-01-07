@@ -65,9 +65,9 @@ class Server:
         self.ratingCount = np.zeros((M,))
         self.uphi = np.zeros((M,K))
     def randomNoiseVector(self, it):
-        nosie=random_integers(0,P,K)
-        self.add_phi(it,noise)
-        return noise
+        n=random_integers(0,P,K)
+        self.add_phi(it,n)
+        return n
     def randomNumberVector(self):
         return exponential(1, K)
     def init_grad(self):
@@ -76,8 +76,8 @@ class Server:
         self.uphi = np.zeros((M,K))
     def updateQ(self):
         self.Q += self.grad
-    def add_phi(self, it, noise):
-        self.uphi[it] = (self.uphi[it] + noise) % P
+    def add_phi(self, it, n):
+        self.uphi[it] = (self.uphi[it] + n) % P
     def cal_grad(self, ss_grad):
         self.grad = (ss_grad - self.uphi) % P
 	print 'true'
