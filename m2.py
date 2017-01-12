@@ -6,13 +6,13 @@ import sys
 N = 943  # users
 M = 1682 # items
 K = 8  # latent features, between 20 to 100
-P = 2147483647
+P = 1e9
 maxr = 5 # max rating score
 minr = 1 # min rating score
 
-alpha=0.00000001
-beta=0.01
-epi = 10
+alpha=0.01
+beta=0.001
+epi = 1e9
 
 Ratings = np.zeros((943,1682))
 test_list = {}
@@ -29,7 +29,7 @@ def pred(file, U, Q, test_list):
         fw.write('%d %d %f\n' % (i+1,j+1,r))
         if r  > 5:
             r = 5
-        e +=  (r - test_list[key])**2
+        e =  (e+(r - test_list[key])**2)%P
         count+=1
     fw.close()
     print (e/count)**0.5
@@ -76,22 +76,12 @@ class Server:
         self.uphi = np.zeros((M,K))
     def updateQ(self, semi_grad):
         self.grad = self.cal_grad(semi_grad)
-        self.Q += self.grad
+	self.Q += self.grad
     def add_phi(self, it, n):
         self.uphi[it] = (self.uphi[it] + n) % P
     def cal_grad(self, ss_grad):
-        print(ss_grad[0])
-        print(self.uphi[0])
-        print((ss_grad[0]-self.uphi[0])%P)
-        print('------------')
-        print(ss_grad[0][0])
-        print(self.uphi[0][0])
-        print((ss_grad[0][0]-self.uphi[0][0])%P)
-
-        return (ss_grad - self.uphi) % P
+	return (ss_grad - self.uphi)
 class Client:
-    # p = []  user preference, confidential
-    # noise = []  perturbation array
     t = 0  # the tth iteration
     count = 0
     def __init__(self, uid):
@@ -118,21 +108,22 @@ class Client:
                 eij = self.R[j] - np.dot(self.p[0,:],Q[:,j])
                 for k in xrange(K):
                     grad[j][k]=(alpha*(2*eij*self.p[0][k]-beta*Q[k][j])+self.eta[j][k]+self.rho[j][k]+self.phi[j][k])%P
-                    print grad[j][k]
         return grad
     def error(self, Q):
         e = 0
         for j in xrange(M):
             if  self.R[j] > 0:
-                e = e+pow(self.R[j]-np.dot(self.p[0,:],Q[:,j]),2)      
+                e = (e+pow(self.R[j]-np.dot(self.p[0,:],Q[:,j]),2))%P      
                 for k in xrange(K):
-                    e = e+(beta/2)*(pow(self.p[0][k],2)+pow(Q[k][j],2))
+                    e = (e+(beta/2)*(pow(self.p[0][k],2)+pow(Q[k][j],2)))%P
         return e
 
 
 class SemiServer:
     def __init__(self):
         self.grad = np.zeros((M,K))
+    def initgrad(self):
+	self.grad = np.zeros((M,K))	
     def add_grad(self, user_grad):
 	self.grad = (self.grad+user_grad) % P
 
@@ -163,15 +154,15 @@ for j in xrange(M):
             U[i].randomNormalVector(j, count)
             U[i].genNoise(j, H)
 
-steps = 1
+steps = 10
 for step in xrange(steps):
     print 'step%d:' % (step)
     Q = server.Q
     Q = Q.T
     server.init_grad()
     server.init_phi()
+    semiServer.initgrad()
     ### all user's noise 2 and phi
-    print('==== engender noise 2 and phi ====')
     for j in xrange(M):
         H = server.randomNumberVector()
         count = server.ratingCount[j]
@@ -180,13 +171,7 @@ for step in xrange(steps):
                 U[i].randomNormalVector(j, count)
                 U[i].genNoise2(j, H)
                 U[i].phi[j]=server.randomNoiseVector(j)
-                if j == 0:
-                    print 'user%d' % (i)
-                    print U[i].phi[j]
-                    print
-                    print ('server phi:')
-                    print (server.uphi[0]) 
-                    print 
+    
     for ui in U:
         semiServer.add_grad(ui.gradient(Q))
     server.updateQ(semiServer.grad)
@@ -195,7 +180,7 @@ for step in xrange(steps):
     nQ = nQ.T
     err = 0
     for ui in U:
-        err = err + ui.error(nQ)
+        err = (err + ui.error(nQ))%P
     print('err: %f' % (err))
 pred(output, U, server.Q, test_list)
 
