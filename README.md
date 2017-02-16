@@ -10,4 +10,4 @@
 
 - Test
 - Another
-  -Three
+  - Three
